@@ -26,11 +26,21 @@ async function run() {
     await client.connect();
     
       const classCollaction = client.db("school").collection('class');
+      const classSelectCollaction = client.db("school").collection('selectClass');
 
+    
+//all class data get api
       app.get('/class', async (req, res) => {
           const data = await classCollaction.find().toArray()
           res.send(data)
       })
+
+// class seleceted data post api
+    app.post('/select', async (req, res) => {
+      const data = req.body
+      const result = await classSelectCollaction.insertOne(data)
+      res.send(result)
+    })
       
       
       
