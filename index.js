@@ -32,6 +32,7 @@ async function run() {
 
     const classCollaction = client.db("school").collection("class");
     const classSelectCollaction = client.db("school").collection("selectClass");
+    const summeryCollaction = client.db("school").collection("summery");
 
     //all class data get api
     app.get("/class", async (req, res) => {
@@ -84,7 +85,17 @@ app.post("/create-payment-intent", async (req, res) => {
 
  });
     
-    
+    app.post('/summery', async (req, res) => {
+      const data = req.body;
+      const result = await summeryCollaction.insertOne(data)
+      res.send(result)
+    })
+
+    app.get('/summery', async (req, res) => {
+      const query = {email : req.query?.email}
+      const result = await summeryCollaction.find(query).toArray()
+      res.send(result)
+    })
 
   } finally {
 
