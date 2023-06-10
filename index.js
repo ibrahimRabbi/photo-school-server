@@ -72,7 +72,6 @@ async function run() {
 app.post("/create-payment-intent", async (req, res) => {
   const { price } = req.body;
   
- 
   const paymentIntent = await stripe.paymentIntents.create({
     amount: price * 100,
     currency: "usd",
@@ -88,7 +87,9 @@ app.post("/create-payment-intent", async (req, res) => {
     app.post('/summery', async (req, res) => {
       const data = req.body;
       const result = await summeryCollaction.insertOne(data)
-      res.send(result)
+      const query = { _id: { $in: data.selecetClassId.map(id => new ObjectId(id)) } };
+      const deleted = await classSelectCollaction.deleteMany(query)
+      res.send({result,deleted})
     })
 
     app.get('/summery', async (req, res) => {
