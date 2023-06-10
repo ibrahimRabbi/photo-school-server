@@ -8,8 +8,6 @@ require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5000;
 
-
-
 //MIDDLEWERE
 app.use(cors());
 app.use(express.json());
@@ -36,8 +34,26 @@ async function run() {
 
     //all class data get api
     app.get("/class", async (req, res) => {
-      const data = await classCollaction.find().toArray();
-      res.send(data);
+       
+      if (req.query?.email) {
+
+       const  email = { email: req.query?.email };
+        const value = await summeryCollaction.find(email).toArray();
+          let arry = [];
+          const data = value.map((v) => v.classId);
+          data.forEach((v) => arry.push(...v));
+          const query = {
+            _id: { $in: arry.map((id) => new ObjectId(id)) },
+        };
+        const result = await classCollaction.find(query).toArray();
+        res.send(result)
+      } else {
+        const result = await classCollaction.find().toArray();
+        res.send(result);
+      }
+      
+
+      
     });
 
     // class seleceted data post api
@@ -58,48 +74,46 @@ async function run() {
       res.send(data);
     });
 
-//selected class delete api
-    app.delete('/select/:id', async (req, res) => {
-      const id = req.params.id
-      const query = { _id: new ObjectId(id) }
-      const result = await classSelectCollaction.deleteOne(query)
-      res.send(result)
-     
-   })
+    //selected class delete api
+    app.delete("/select/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await classSelectCollaction.deleteOne(query);
+      res.send(result);
+    });
 
+    /****************************************PAYMENT GET WAY API **************************/
+    app.post("/create-payment-intent", async (req, res) => {
+      const { price } = req.body;
 
-  /****************************************PAYMENT GET WAY API **************************/
-app.post("/create-payment-intent", async (req, res) => {
-  const { price } = req.body;
-  
-  const paymentIntent = await stripe.paymentIntents.create({
-    amount: price * 100,
-    currency: "usd",
-    payment_method_types: ["card"],
-  });
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: price * 100,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
 
-  res.send({
-    clientSecret: paymentIntent.client_secret,
-  });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
 
- });
-    
-    app.post('/summery', async (req, res) => {
+    app.post("/summery", async (req, res) => {
       const data = req.body;
-      const result = await summeryCollaction.insertOne(data)
-      const query = { _id: { $in: data.selecetClassId.map(id => new ObjectId(id)) } };
-      const deleted = await classSelectCollaction.deleteMany(query)
-      res.send({result,deleted})
-    })
+      const result = await summeryCollaction.insertOne(data);
+      const query = {
+        _id: { $in: data.selecetClassId.map((id) => new ObjectId(id)) },
+      };
+      const deleted = await classSelectCollaction.deleteMany(query);
 
-    app.get('/summery', async (req, res) => {
-      const query = {email : req.query?.email}
-      const result = await summeryCollaction.find(query).toArray()
-      res.send(result)
-    })
+      res.send({ result, deleted });
+    });
 
+    app.get("/summery", async (req, res) => {
+      const query = { email: req.query?.email };
+      const result = await summeryCollaction.find(query).toArray();
+      res.send(result);
+    });
   } finally {
-
   }
 }
 run().catch(console.dir);
