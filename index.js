@@ -139,10 +139,20 @@ async function run() {
     app.post("/summery", async (req, res) => {
       const data = req.body;
       const id = { _id: new ObjectId(data.selecetClassId) }
-      
+
+      const classId = { _id: new ObjectId(data.classId) }
+      const classobj = await classCollaction.findOne(classId)
+      const options = { upsert: true };
+       const updateDoc = {
+         $set: {
+           availableSeats: classobj.availableSeats - 1,
+           totalEnrolled: classobj.totalEnrolled + 1
+         },
+       };
+      const updatedClass = await classCollaction.updateOne(classId,updateDoc,options)
       const result = await summeryCollaction.insertOne(data);
       const deleted = await classSelectCollaction.deleteOne(id);
-      res.send({ result, deleted });
+      res.send({ result, deleted,updatedClass });
     });
 
     app.get("/summery", async (req, res) => {
