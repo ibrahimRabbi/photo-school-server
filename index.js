@@ -32,29 +32,38 @@ async function run() {
     const classSelectCollaction = client.db("school").collection("selectClass");
     const summeryCollaction = client.db("school").collection("summery");
 
-    //all class data get api
+    /***************************************class related all apiS**************************************/
+
+    //all class data get api and data get using email query params
     app.get("/class", async (req, res) => {
-       
+      let query = {};
       if (req.query?.email) {
-
-       const  email = { email: req.query?.email };
-        const value = await summeryCollaction.find(email).toArray();
-          let arry = [];
-          const data = value.map((v) => v.classId);
-          data.forEach((v) => arry.push(...v));
-          const query = {
-            _id: { $in: arry.map((id) => new ObjectId(id)) },
-        };
-        const result = await classCollaction.find(query).toArray();
-        res.send(result)
-      } else {
-        const result = await classCollaction.find().toArray();
-        res.send(result);
+        query = { instructorEmail: req.query.email };
       }
-      
-
-      
+      const result = await classCollaction.find(query).toArray();
+      res.send(result);
     });
+      
+    //add class post api
+    app.post("/class", async (req, res) => {
+      const data = req.body;
+      const result = await classCollaction.insertOne(data);
+      res.send(result);
+    });
+
+//class delete api 
+    app.delete('/class/:id', async (req, res) => { 
+      const id = { _id: new ObjectId(req.params.id)};
+      const result = await classCollaction.deleteOne(id)
+      res.send(result)
+    })
+
+
+
+
+
+
+    /****************************selacted class related apiS******************************** */
 
     // class seleceted data post api
     app.post("/select", async (req, res) => {
@@ -82,7 +91,10 @@ async function run() {
       res.send(result);
     });
 
+     
+
     /****************************************PAYMENT GET WAY API **************************/
+
     app.post("/create-payment-intent", async (req, res) => {
       const { price } = req.body;
 
@@ -96,6 +108,9 @@ async function run() {
         clientSecret: paymentIntent.client_secret,
       });
     });
+
+
+    /*******************************payment summery related apiS *******************************/
 
     app.post("/summery", async (req, res) => {
       const data = req.body;
@@ -113,7 +128,10 @@ async function run() {
       const result = await summeryCollaction.find(query).toArray();
       res.send(result);
     });
+
+
   } finally {
+
   }
 }
 run().catch(console.dir);
@@ -124,3 +142,41 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log(`your server run on ${port}`);
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// if (req.query?.email) {
+      //   const email = { email: req.query?.email };
+      //   const value = await summeryCollaction.find(email).toArray();
+      //   let arry = [];
+      //   const data = value.map((v) => v.classId);
+      //   data.forEach((v) => arry.push(...v));
+      //   const query = {
+      //     _id: { $in: arry.map((id) => new ObjectId(id)) },
+      //   };
+      //   const result = await classCollaction.find(query).toArray();
+      //   res.send(result);
+      // } else {
+      //   const result = await classCollaction.find().toArray();
+      //   res.send(result);
+      // }
