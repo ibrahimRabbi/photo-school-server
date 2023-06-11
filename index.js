@@ -43,6 +43,13 @@ async function run() {
       const result = await classCollaction.find(query).toArray();
       res.send(result);
     });
+
+    //class data get using id 
+    app.get('/class/:id', async(req,res)=> {
+      const id = { _id: new ObjectId(req.params.id)};
+      const result = await classCollaction.findOne(id)
+      res.send(result)  
+    })
       
     //add class post api
     app.post("/class", async (req, res) => {
@@ -58,6 +65,23 @@ async function run() {
       res.send(result)
     })
 
+    //class update patch aPI
+    app.patch('/update/:id', async (req, res) => {
+      const data = req.body
+      const id = { _id: new ObjectId(req.params.id) };
+       const options = { upsert: true };
+       
+       const updateDoc = {
+         $set: {
+           className :data.className,
+           classPrice : data.classPrice,
+           availableSeats : data.availableSeats
+         },
+       };
+
+  const result = await classCollaction.updateOne(id, updateDoc, options);
+  res.send(result)
+     })
 
 
 
