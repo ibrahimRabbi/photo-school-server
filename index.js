@@ -138,12 +138,10 @@ async function run() {
 
     app.post("/summery", async (req, res) => {
       const data = req.body;
+      const id = { _id: new ObjectId(data.selecetClassId) }
+      
       const result = await summeryCollaction.insertOne(data);
-      const query = {
-        _id: { $in: data.selecetClassId.map((id) => new ObjectId(id)) },
-      };
-      const deleted = await classSelectCollaction.deleteMany(query);
-
+      const deleted = await classSelectCollaction.deleteOne(id);
       res.send({ result, deleted });
     });
 
