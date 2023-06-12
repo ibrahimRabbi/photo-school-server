@@ -31,6 +31,11 @@ async function run() {
     const classCollaction = client.db("school").collection("class");
     const classSelectCollaction = client.db("school").collection("selectClass");
     const summeryCollaction = client.db("school").collection("summery");
+    const userCollaction = client.db("school").collection("users");
+
+
+
+
 
     /***************************************class related all apiS**************************************/
 
@@ -154,12 +159,29 @@ async function run() {
       const deleted = await classSelectCollaction.deleteOne(id);
       res.send({ result, deleted,updatedClass });
     });
-
+//payment history taken get api
     app.get("/summery", async (req, res) => {
       const query = { email: req.query?.email };
       const result = await summeryCollaction.find(query).toArray();
       res.send(result);
     });
+
+
+    /***************************************************user managment apiS ***********************************/
+
+    app.post('/user', async (req, res) => {
+      const data = req.body
+      const result = await userCollaction.insertOne(data)
+      res.send(result)
+})
+
+    app.get('/user', async (req, res) => {
+      const userData = await userCollaction.find().toArray()
+      res.send(userData)
+})
+
+
+
 
 
   } finally {
