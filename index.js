@@ -32,6 +32,7 @@ async function run() {
     const classSelectCollaction = client.db("school").collection("selectClass");
     const summeryCollaction = client.db("school").collection("summery");
     const userCollaction = client.db("school").collection("users");
+    const panndingCollaction = client.db("school").collection("pannding");
 
 
 
@@ -63,12 +64,8 @@ async function run() {
       res.send(result);
     });
 
-//class delete api 
-    app.delete('/class/:id', async (req, res) => { 
-      const id = { _id: new ObjectId(req.params.id)};
-      const result = await classCollaction.deleteOne(id)
-      res.send(result)
-    })
+  
+   
 
     //class update patch aPI
     app.patch('/update/:id', async (req, res) => {
@@ -84,7 +81,7 @@ async function run() {
          },
        };
 
-  const result = await classCollaction.updateOne(id, updateDoc, options);
+  const result = await panndingCollaction.updateOne(id, updateDoc, options);
   res.send(result)
      })
 
@@ -171,19 +168,85 @@ async function run() {
 
     app.post('/user', async (req, res) => {
       const data = req.body
-      const result = await userCollaction.insertOne(data)
-      res.send(result)
+      const query = {email:data.email}
+      const existing = await userCollaction.findOne(query)
+      console.log(existing)
+      if (existing) {
+        return res.send({message:'user already exist'})
+      }
+      
+        const result = await userCollaction.insertOne(data);
+        res.send(result);
+     
 })
 
     app.get('/user', async (req, res) => {
-      const userData = await userCollaction.find().toArray()
+      let query = {}
+      if (req.query?.email) {
+        query = {email:req.query.email}
+      }
+      const userData = await userCollaction.find(query).toArray()
       res.send(userData)
 })
 
+    app.patch('/user/:id', async (req, res) => {
+      const data = req.body
+      const id = { _id: new ObjectId(req.params.id) };
+       const options = { upsert: true };
+       const updateDoc = {
+         $set: {
+            role : data.role
+         },
+      };
+      const result = await userCollaction.updateOne(id, updateDoc, options)
+      res.send(result)
+})
 
 
+/******************************************out side of or entermediatory apiS********************************* */
+
+    app.post('/pannding', async (req, res) => {
+      const data = req.body
+      const result = await panndingCollaction.insertOne(data)
+      res.send(result)
+    })
+
+    app.get('/pannding', async (req, res) => {
+       let query = {}
+      if (req.query?.email) {
+        query = {instructorEmail : req.query.email}
+      }
+      const data = await panndingCollaction.find(query).toArray()
+      res.send(data)
+    })
 
 
+ app.patch("/pannding/:id", async (req, res) => {
+   const data = req.body;
+   const id = { _id: new ObjectId(req.params.id) };
+   const options = { upsert: true };
+   const updateDoc = {
+     $set: {
+       status: data.status,
+     },
+   };
+   const result = await panndingCollaction.updateOne(id, updateDoc, options);
+
+   if (data.status == 'approved') {
+     const getFromPannding = await panndingCollaction.findOne(id)
+       await classCollaction.insertOne(getFromPannding)
+    }
+    res.send({result});
+ });
+
+
+  app.delete('/pannding/:id', async (req, res) => { 
+      const id = { _id: new ObjectId(req.params.id)};
+      const result = await panndingCollaction.deleteOne(id)
+      res.send(result)
+    })
+
+    
   } finally {
 
   }
