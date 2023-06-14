@@ -104,7 +104,6 @@ async function run() {
       if (req.query?.email) {
         query = { userEmail: req.query.email };
       }
-
       const data = await classSelectCollaction.find(query).toArray();
       res.send(data);
     });
@@ -118,8 +117,9 @@ async function run() {
     });
 
      
-
-    /****************************************PAYMENT GET WAY API **************************/
+ 
+  /*************************************** PAYMENT GET WAY API **************************/ 
+ 
 
     app.post("/create-payment-intent", async (req, res) => {
       const { price } = req.body;
@@ -136,7 +136,7 @@ async function run() {
     });
 
 
-    /*******************************payment summery related apiS *******************************/
+    /********************************payment-summery-related-api********************************/
 
     app.post("/summery", async (req, res) => {
       const data = req.body;
@@ -156,7 +156,8 @@ async function run() {
       const deleted = await classSelectCollaction.deleteOne(id);
       res.send({ result, deleted,updatedClass });
     });
-//payment history taken get api
+
+ //payment history taken get api
     app.get("/summery", async (req, res) => {
       const query = { email: req.query?.email };
       const result = await summeryCollaction.find(query).toArray();
@@ -164,13 +165,13 @@ async function run() {
     });
 
 
-    /***************************************************user managment apiS ***********************************/
+    /******************************************user managment apiS*****************************/
 
     app.post('/user', async (req, res) => {
       const data = req.body
       const query = {email:data.email}
       const existing = await userCollaction.findOne(query)
-      console.log(existing)
+      
       if (existing) {
         return res.send({message:'user already exist'})
       }
@@ -203,7 +204,7 @@ async function run() {
 })
 
 
-/******************************************out side of or entermediatory apiS********************************* */
+/*****************************out side of or entermediatory apiS********************************* */
 
     app.post('/pannding', async (req, res) => {
       const data = req.body
