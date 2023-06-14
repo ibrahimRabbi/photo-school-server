@@ -143,7 +143,7 @@ async function run() {
       const id = { _id: new ObjectId(data.selecetClassId) }
 
       const classId = { _id: new ObjectId(data.classId) }
-      const classobj = await classCollaction.findOne(classId)
+      const classobj = await panndingCollaction.findOne(classId)
       const options = { upsert: true };
        const updateDoc = {
          $set: {
@@ -185,11 +185,10 @@ async function run() {
       let query = {}
       if (req.query?.email) {
         query = {email:req.query.email}
-      }
+      }    
       const userData = await userCollaction.find(query).toArray()
       res.send(userData)
-})
-
+}) 
     app.patch('/user/:id', async (req, res) => {
       const data = req.body
       const id = { _id: new ObjectId(req.params.id) };
