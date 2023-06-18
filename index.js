@@ -26,17 +26,13 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    //await client.connect();
 
     const classCollaction = client.db("school").collection("class");
     const classSelectCollaction = client.db("school").collection("selectClass");
     const summeryCollaction = client.db("school").collection("summery");
     const userCollaction = client.db("school").collection("users");
     const panndingCollaction = client.db("school").collection("pannding");
-
-
-
-
 
     /***************************************class related all apiS**************************************/
 
@@ -50,44 +46,19 @@ async function run() {
       res.send(result);
     });
 
-    //class data get using id 
-    app.get('/class/:id', async(req,res)=> {
-      const id = { _id: new ObjectId(req.params.id)};
-      const result = await classCollaction.findOne(id)
-      res.send(result)  
-    })
-      
-    //add class post api
-    app.post("/class", async (req, res) => {
-      const data = req.body;
-      const result = await classCollaction.insertOne(data);
+    //class data get using id
+    app.get("/class/:id", async (req, res) => {
+      const id = { _id: new ObjectId(req.params.id) };
+      const result = await classCollaction.findOne(id);
       res.send(result);
     });
 
-  
-   
-
-    //class update patch aPI
-    app.patch('/update/:id', async (req, res) => {
-      const data = req.body
-      const id = { _id: new ObjectId(req.params.id) };
-       const options = { upsert: true };
-       
-       const updateDoc = {
-         $set: {
-           className :data.className,
-           classPrice : data.classPrice,
-           availableSeats : data.availableSeats
-         },
-       };
-
-  const result = await panndingCollaction.updateOne(id, updateDoc, options);
-  res.send(result)
-     })
-
-
-
-
+    //add class post api
+    // app.post("/class", async (req, res) => {
+    //   const data = req.body;
+    //   const result = await classCollaction.insertOne(data);
+    //   res.send(result);
+    // });
 
     /****************************selacted class related apiS******************************** */
 
@@ -116,10 +87,7 @@ async function run() {
       res.send(result);
     });
 
-     
- 
-  /*************************************** PAYMENT GET WAY API **************************/ 
- 
+    /*************************************** PAYMENT GET WAY API **************************/
 
     app.post("/create-payment-intent", async (req, res) => {
       const { price } = req.body;
@@ -135,120 +103,147 @@ async function run() {
       });
     });
 
-
     /********************************payment-summery-related-api********************************/
 
     app.post("/summery", async (req, res) => {
       const data = req.body;
-      const id = { _id: new ObjectId(data.selecetClassId) }
+      const id = { _id: new ObjectId(data.selecetClassId) };
 
-      const classId = { _id: new ObjectId(data.classId) }
-      const classobj = await panndingCollaction.findOne(classId)
+      const classId = { _id: new ObjectId(data.classId) };
+      const classobj = await panndingCollaction.findOne(classId);
       const options = { upsert: true };
-       const updateDoc = {
-         $set: {
-           availableSeats: classobj.availableSeats - 1,
-           totalEnrolled: classobj.totalEnrolled + 1
-         },
-       };
-      const updatedClass = await classCollaction.updateOne(classId,updateDoc,options)
+      const updateDoc = {
+        $set: {
+          availableSeats: classobj.availableSeats - 1,
+          totalEnrolled: classobj.totalEnrolled + 1,
+        },
+      };
+      const updatedClass = await classCollaction.updateOne(
+        classId,
+        updateDoc,
+        options
+      );
       const result = await summeryCollaction.insertOne(data);
       const deleted = await classSelectCollaction.deleteOne(id);
-      res.send({ result, deleted,updatedClass });
+      res.send({ result, deleted, updatedClass });
     });
 
- //payment history taken get api
+    //payment history taken get api
     app.get("/summery", async (req, res) => {
       const query = { email: req.query?.email };
       const result = await summeryCollaction.find(query).toArray();
       res.send(result);
     });
 
-
     /******************************************user managment apiS*****************************/
 
-    app.post('/user', async (req, res) => {
-      const data = req.body
-      const query = {email:data.email}
-      const existing = await userCollaction.findOne(query)
-      
-      if (existing) {
-        return res.send({message:'user already exist'})
-      }
-      
-        const result = await userCollaction.insertOne(data);
-        res.send(result);
-     
-})
+    app.post("/user", async (req, res) => {
+      const data = req.body;
+      const query = { email: data.email };
+      const existing = await userCollaction.findOne(query);
 
-    app.get('/user', async (req, res) => {
-      let query = {}
+      if (existing) {
+        return res.send({ message: "user already exist" });
+      }
+
+      const result = await userCollaction.insertOne(data);
+      res.send(result);
+    });
+
+    app.get("/user", async (req, res) => {
+      let query = {};
       if (req.query?.email) {
-        query = {email:req.query.email}
-      }    
-      const userData = await userCollaction.find(query).toArray()
-      res.send(userData)
-}) 
-    app.patch('/user/:id', async (req, res) => {
-      const data = req.body
+        query = { email: req.query.email };
+      }
+      const userData = await userCollaction.find(query).toArray();
+      res.send(userData);
+    });
+    app.patch("/user/:id", async (req, res) => {
+      const data = req.body;
       const id = { _id: new ObjectId(req.params.id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          role: data.role,
+        },
+      };
+      const result = await userCollaction.updateOne(id, updateDoc, options);
+      res.send(result);
+    });
+
+    /*****************************out side of or entermediatory apiS********************************* */
+
+    //instructor added classes pennding data api
+    app.post("/pannding", async (req, res) => {
+      const data = req.body;
+      const result = await panndingCollaction.insertOne(data);
+      res.send(result);
+    });
+
+    //instructor added classes data get api
+    app.get("/pannding", async (req, res) => {
+      let query = {};
+      if (req.query?.email) {
+        query = { instructorEmail: req.query.email };
+      }
+      const data = await panndingCollaction.find(query).toArray();
+      res.send(data);
+    });
+
+    app.get("/pannding/:id", async (req, res) => {
+      const id = { _id: new ObjectId(req.params.id) };
+      const result = await panndingCollaction.findOne(id);
+      res.send(result);
+    });
+
+    //instructor clssses data update patch api
+    app.patch("/pannding/:id", async (req, res) => {
+      const data = req.body;
+      const id = { _id: new ObjectId(req.params.id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          className: data.className,
+          classPrice: data.classPrice,
+          availableSeats: data.availableSeats,
+          classImage: data.image,
+        },
+      };
+
+      const result = await panndingCollaction.updateOne(id, updateDoc, options);
+      res.send(result);
+    });
+
+
+
+
+
+    //instructor added class status update api
+    app.patch("/status/:id", async (req, res) => {
+      const data = req.body;
+      
+       const id = { _id: new ObjectId(req.params.id) };
        const options = { upsert: true };
        const updateDoc = {
          $set: {
-            role : data.role
+           status: data.status,
          },
-      };
-      const result = await userCollaction.updateOne(id, updateDoc, options)
-      res.send(result)
-})
+       };
+       const result = await panndingCollaction.updateOne(id, updateDoc, options);
 
+       if (data.status == 'approved') {
+         const getFromPannding = await panndingCollaction.findOne(id)
+           await classCollaction.insertOne(getFromPannding)
+        }
+        res.send(result);
+    });
 
-/*****************************out side of or entermediatory apiS********************************* */
-
-    app.post('/pannding', async (req, res) => {
-      const data = req.body
-      const result = await panndingCollaction.insertOne(data)
-      res.send(result)
-    })
-
-    app.get('/pannding', async (req, res) => {
-       let query = {}
-      if (req.query?.email) {
-        query = {instructorEmail : req.query.email}
-      }
-      const data = await panndingCollaction.find(query).toArray()
-      res.send(data)
-    })
-
-
- app.patch("/pannding/:id", async (req, res) => {
-   const data = req.body;
-   const id = { _id: new ObjectId(req.params.id) };
-   const options = { upsert: true };
-   const updateDoc = {
-     $set: {
-       status: data.status,
-     },
-   };
-   const result = await panndingCollaction.updateOne(id, updateDoc, options);
-
-   if (data.status == 'approved') {
-     const getFromPannding = await panndingCollaction.findOne(id)
-       await classCollaction.insertOne(getFromPannding)
-    }
-    res.send({result});
- });
-
-
-  app.delete('/pannding/:id', async (req, res) => { 
-      const id = { _id: new ObjectId(req.params.id)};
-      const result = await panndingCollaction.deleteOne(id)
-      res.send(result)
-    })
-
-    
+    app.delete("/pannding/:id", async (req, res) => {
+      const id = { _id: new ObjectId(req.params.id) };
+      const result = await panndingCollaction.deleteOne(id);
+      res.send(result);
+    });
   } finally {
-
   }
 }
 run().catch(console.dir);
@@ -260,40 +255,18 @@ app.listen(port, () => {
   console.log(`your server run on ${port}`);
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // if (req.query?.email) {
-      //   const email = { email: req.query?.email };
-      //   const value = await summeryCollaction.find(email).toArray();
-      //   let arry = [];
-      //   const data = value.map((v) => v.classId);
-      //   data.forEach((v) => arry.push(...v));
-      //   const query = {
-      //     _id: { $in: arry.map((id) => new ObjectId(id)) },
-      //   };
-      //   const result = await classCollaction.find(query).toArray();
-      //   res.send(result);
-      // } else {
-      //   const result = await classCollaction.find().toArray();
-      //   res.send(result);
-      // }
+//   const email = { email: req.query?.email };
+//   const value = await summeryCollaction.find(email).toArray();
+//   let arry = [];
+//   const data = value.map((v) => v.classId);
+//   data.forEach((v) => arry.push(...v));
+//   const query = {
+//     _id: { $in: arry.map((id) => new ObjectId(id)) },
+//   };
+//   const result = await classCollaction.find(query).toArray();
+//   res.send(result);
+// } else {
+//   const result = await classCollaction.find().toArray();
+//   res.send(result);
+// }
