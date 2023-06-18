@@ -107,9 +107,9 @@ async function run() {
 
     app.post("/summery", async (req, res) => {
       const data = req.body;
-      const id = { _id: new ObjectId(data.selecetClassId) };
-
-      const classId = { _id: new ObjectId(data.classId) };
+       
+      const id = {_id: new ObjectId(data.selecetClassId)};
+      const classId = {_id: new ObjectId(data.classId)};
       const classobj = await panndingCollaction.findOne(classId);
       const options = { upsert: true };
       const updateDoc = {
@@ -118,14 +118,10 @@ async function run() {
           totalEnrolled: classobj.totalEnrolled + 1,
         },
       };
-      const updatedClass = await classCollaction.updateOne(
-        classId,
-        updateDoc,
-        options
-      );
+      const updatedClass = await panndingCollaction.updateOne(classId,updateDoc,options);
       const result = await summeryCollaction.insertOne(data);
       const deleted = await classSelectCollaction.deleteOne(id);
-      res.send({ result, deleted, updatedClass });
+      res.send({ result, deleted,updatedClass});
     });
 
     //payment history taken get api
@@ -135,17 +131,15 @@ async function run() {
       res.send(result);
     });
 
-    /******************************************user managment apiS*****************************/
+    /*************************************user managment apiS*****************************/
 
     app.post("/user", async (req, res) => {
       const data = req.body;
       const query = { email: data.email };
       const existing = await userCollaction.findOne(query);
-
       if (existing) {
         return res.send({ message: "user already exist" });
       }
-
       const result = await userCollaction.insertOne(data);
       res.send(result);
     });
@@ -171,7 +165,7 @@ async function run() {
       res.send(result);
     });
 
-    /*****************************out side of or entermediatory apiS********************************* */
+    /*********************entermediatory between add class to admin approved api********************/
 
     //instructor added classes pennding data api
     app.post("/pannding", async (req, res) => {
@@ -190,6 +184,7 @@ async function run() {
       res.send(data);
     });
 
+    //single class data get api using id
     app.get("/pannding/:id", async (req, res) => {
       const id = { _id: new ObjectId(req.params.id) };
       const result = await panndingCollaction.findOne(id);
@@ -214,33 +209,32 @@ async function run() {
       res.send(result);
     });
 
-
-
-
-
     //instructor added class status update api
     app.patch("/status/:id", async (req, res) => {
       const data = req.body;
-      
-       const id = { _id: new ObjectId(req.params.id) };
-       const options = { upsert: true };
-       const updateDoc = {
-         $set: {
-           status: data.status,
-         },
-       };
-       const result = await panndingCollaction.updateOne(id, updateDoc, options);
 
-       if (data.status == 'approved') {
-         const getFromPannding = await panndingCollaction.findOne(id)
-           await classCollaction.insertOne(getFromPannding)
-        }
-        res.send(result);
+      const id = { _id: new ObjectId(req.params.id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          status: data.status,
+          panndingitemId: req.params.id,
+        },
+      };
+      const result = await panndingCollaction.updateOne(id, updateDoc, options);
+
+      if (data.status == "approved") {
+        const getFromPannding = await panndingCollaction.findOne(id);
+        await classCollaction.insertOne(getFromPannding);
+      }
+      res.send(result);
     });
 
+    //delete class api
     app.delete("/pannding/:id", async (req, res) => {
       const id = { _id: new ObjectId(req.params.id) };
       const result = await panndingCollaction.deleteOne(id);
+      await classCollaction.deleteOne({ panndingitemId: req.params.id });
       res.send(result);
     });
   } finally {
@@ -255,18 +249,27 @@ app.listen(port, () => {
   console.log(`your server run on ${port}`);
 });
 
+
+
+
+
+
+
+
+
+
 // if (req.query?.email) {
-//   const email = { email: req.query?.email };
-//   const value = await summeryCollaction.find(email).toArray();
-//   let arry = [];
-//   const data = value.map((v) => v.classId);
-//   data.forEach((v) => arry.push(...v));
-//   const query = {
-//     _id: { $in: arry.map((id) => new ObjectId(id)) },
-//   };
-//   const result = await classCollaction.find(query).toArray();
-//   res.send(result);
-// } else {
-//   const result = await classCollaction.find().toArray();
-//   res.send(result);
-// }
+      //   const email = { email: req.query?.email };
+      //   const value = await summeryCollaction.find(email).toArray();
+      //   let arry = [];
+      //   const data = value.map((v) => v.classId);
+      //   data.forEach((v) => arry.push(...v));
+      //   const query = {
+      //     _id: { $in: arry.map((id) => new ObjectId(id)) },
+      //   };
+      //   const result = await classCollaction.find(query).toArray();
+      //   res.send(result);
+      // } else {
+      //   const result = await classCollaction.find().toArray();
+      //   res.send(result);
+      // }
