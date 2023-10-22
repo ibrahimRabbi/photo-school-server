@@ -13,7 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 const user = process.env.MONGO_USER;
-const pass = process.env.MONGO_PASS;
+const pass = process.env.MONGP_PASS;
 const uri = `mongodb+srv://${user}:${pass}@cluster0.oqkryfl.mongodb.net/?retryWrites=true&w=majority`;
 
 const client = new MongoClient(uri, {
@@ -39,6 +39,9 @@ async function run() {
     //all class data get api and data get using email query params
     app.get("/class", async (req, res) => {
       let query = {};
+      if (req.query.category) {
+        query = { category: req.query.category }
+      } 
       if (req.query?.email) {
         query = { instructorEmail: req.query.email };
       }
@@ -72,6 +75,7 @@ async function run() {
     //class selected data get using email api
     app.get("/select", async (req, res) => {
       let query = {};
+      
       if (req.query?.email) {
         query = { userEmail: req.query.email };
       }
@@ -108,25 +112,26 @@ async function run() {
     app.post("/summery", async (req, res) => {
       const data = req.body;
        
-      const id = {_id: new ObjectId(data.selecetClassId)};
-      const classId = {_id: new ObjectId(data.classId)};
-      const classobj = await panndingCollaction.findOne(classId);
-      const options = { upsert: true };
-      const updateDoc = {
-        $set: {
-          availableSeats: classobj.availableSeats - 1,
-          totalEnrolled: classobj.totalEnrolled + 1,
-        },
-      };
-      const updatedClass = await panndingCollaction.updateOne(classId,updateDoc,options);
+     // const id = {_id: new ObjectId(data.selecetClassId)};
+     // const classId = {_id: new ObjectId(data.classId)};
+    //  const classobj = await panndingCollaction.findOne(classId);
+     // const options = { upsert: true };
+      // const updateDoc = {
+      //   $set: {
+      //     availableSeats: classobj.availableSeats - 1,
+      //     totalEnrolled: classobj.totalEnrolled + 1,
+      //   },
+      // };
+      //const updatedClass = await panndingCollaction.updateOne(classId,updateDoc,options);
       const result = await summeryCollaction.insertOne(data);
-      const deleted = await classSelectCollaction.deleteOne(id);
-      res.send({ result, deleted,updatedClass});
+     // const deleted = await classSelectCollaction.deleteOne(id);
+      //res.send({ result, deleted,updatedClass});
+      res.send(result)
     });
 
     //payment history taken get api
     app.get("/summery", async (req, res) => {
-      const query = { email: req.query?.email };
+      let  query = { email: req.query?.email }
       const result = await summeryCollaction.find(query).toArray();
       res.send(result);
     });
@@ -145,13 +150,14 @@ async function run() {
     });
 
     app.get("/user", async (req, res) => {
-      let query = {};
-      if (req.query?.email) {
-        query = { email: req.query.email };
+      let query = {} ;
+      if (req.query.email) {
+        query = { email: req.query.email }
       }
-      const userData = await userCollaction.find(query).toArray();
+      const userData = await userCollaction.find(query).toArray()
       res.send(userData);
     });
+
     app.patch("/user/:id", async (req, res) => {
       const data = req.body;
       const id = { _id: new ObjectId(req.params.id) };
