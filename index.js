@@ -68,20 +68,26 @@ async function run() {
     // class seleceted data post api
     app.post("/select", async (req, res) => {
       const data = req.body;
-      const result = await classSelectCollaction.insertOne(data);
-      res.send(result);
+      const finding = await classSelectCollaction.findOne(data)
+      if (finding) {
+        res.send({ message: 'course already saved'})
+      } else {
+        const result = await classSelectCollaction.insertOne(data);
+        res.send(result);
+      }
     });
 
     //class selected data get using email api
     app.get("/select", async (req, res) => {
       let query = {};
-      
       if (req.query?.email) {
         query = { userEmail: req.query.email };
       }
       const data = await classSelectCollaction.find(query).toArray();
       res.send(data);
     });
+
+     
 
     //selected class delete api
     app.delete("/select/:id", async (req, res) => {
@@ -92,7 +98,6 @@ async function run() {
     });
 
     /*************************************** PAYMENT GET WAY API **************************/
-
     app.post("/create-payment-intent", async (req, res) => {
       const { price } = req.body;
 
@@ -110,28 +115,14 @@ async function run() {
     /********************************payment-summery-related-api********************************/
 
     app.post("/summery", async (req, res) => {
-      const data = req.body;
-       
-     // const id = {_id: new ObjectId(data.selecetClassId)};
-     // const classId = {_id: new ObjectId(data.classId)};
-    //  const classobj = await panndingCollaction.findOne(classId);
-     // const options = { upsert: true };
-      // const updateDoc = {
-      //   $set: {
-      //     availableSeats: classobj.availableSeats - 1,
-      //     totalEnrolled: classobj.totalEnrolled + 1,
-      //   },
-      // };
-      //const updatedClass = await panndingCollaction.updateOne(classId,updateDoc,options);
+      const data = req.body; 
       const result = await summeryCollaction.insertOne(data);
-     // const deleted = await classSelectCollaction.deleteOne(id);
-      //res.send({ result, deleted,updatedClass});
       res.send(result)
     });
 
     //payment history taken get api
     app.get("/summery", async (req, res) => {
-      let  query = { email: req.query?.email }
+      let query = { email: req.query?.email }
       const result = await summeryCollaction.find(query).toArray();
       res.send(result);
     });
@@ -256,8 +247,7 @@ app.listen(port, () => {
 });
 
 
-
-
+ 
 
 
 
